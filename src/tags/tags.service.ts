@@ -7,7 +7,9 @@ export class TagsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.tag.findMany();
+    return this.prisma.tag.findMany({
+      orderBy: { name: 'asc' }, // ordenação opcional
+    });
   }
 
   async findOne(id: string) {
@@ -16,7 +18,7 @@ export class TagsService {
     });
 
     if (!tag) {
-      throw new NotFoundException(`Tag with ID ${id} not found`);
+      throw new NotFoundException(`Tag com ID ${id} não encontrada.`);
     }
 
     return tag;
@@ -28,8 +30,11 @@ export class TagsService {
         data: createTagDto,
       });
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new ConflictException(`Tag with name ${createTagDto.name} already exists`);
+      if (
+        error.code === 'P2002' || 
+        error?.meta?.target?.includes('name') // alternativa extra para garantir
+      ) {
+        throw new ConflictException(`Tag com nome "${createTagDto.name}" já existe.`);
       }
       throw error;
     }
@@ -44,4 +49,4 @@ export class TagsService {
       where: { id },
     });
   }
-} 
+}

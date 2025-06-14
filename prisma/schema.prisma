@@ -51,16 +51,15 @@ model CoffeeTag {
 
 model Cart {
   id                  String     @id @default(uuid())
-  userId              String?    // Usuário opcional
-  status              String     // 'Abandonado', 'Aguardando Pagamento', 'Finalizado'
-  statusPayment       String     // 'Aprovado', 'Análise', 'Pendente', 'Cancelado'
-  dataTimeCompleted   DateTime?  // Data de finalização (pode ser null)
+  userId              String?
+  status              String
+  statusPayment       String
+  dataTimeCompleted   DateTime?
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
 
-  // Relacionamentos
   items               CartItem[]
-  orders Order[]
+  orders              Order[] @relation("CartOrders")
 }
 model CartItem {
   id         String   @id @default(uuid())
@@ -75,14 +74,13 @@ model CartItem {
   coffee     Coffee @relation(fields: [coffeeId], references: [id], onDelete: Cascade)
   cart       Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  //@@check(quantity >= 1 && quantity <= 5)
 
 
 }
 model Order {
   id              String   @id @default(uuid())
   cartId          String
-  cart            Cart     @relation(fields: [cartId], references: [id])
+  cart            Cart     @relation("CartOrders", fields: [cartId], references: [id])
   totalItems      Int
   shippingFee     Float
   totalAmount     Float
