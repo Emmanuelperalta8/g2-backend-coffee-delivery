@@ -13,31 +13,48 @@ export class CheckoutService {
   async createOrder(checkoutDto: CheckoutDto) {
     const { cartId, deliveryAddress, paymentMethod } = checkoutDto;
 
-    // Obter o carrinho com itens e cálculos
+    
     const cart = await this.cartService.getCart(cartId);
+    if (!cart) {
+      throw new NotFoundException(`Carrinho com id ${cartId} não encontrado`);
+    }
 
-    // Criar o pedido
+   
+    const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    const itemsTotal = cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+    const shippingFee = 10; 
+    const totalAmount = itemsTotal + shippingFee;
+
+    
     const order = await this.prisma.order.create({
       data: {
         cart: { connect: { id: cartId } },
-        totalItems: 10,
-        shippingFee: 1,
-        totalAmount: 2,
-        // Aqui você poderia salvar também o endereço e método de pagamento
-        // em modelos adicionais relacionados ao pedido
+        totalItems,
+        shippingFee,
+        totalAmount,
+        deliveryAddress,
+        paymentMethod,
+        status: 'pending', 
+      },
+      include: {
+        cart: {
+          include: {
+            items: true,
+          },
+        },
       },
     });
 
-    // Formatar a resposta
+   
     return {
       id: order.id,
-      items: [],
-      uniqueCategories: 1,
-      itemsTotal: Number(order.totalItems),
-      shippingFee: Number(order.shippingFee),
-      total: Number(order.totalAmount),
+      items: order.cart.items,
+      uniqueCategories: new Set(order.cart.items.map(item => item.categoryId)).size,
+      itemsTotal,
+      shippingFee,
+      total: totalAmount,
       status: order.status,
       createdAt: order.createdAt,
     };
   }
-} 
+}

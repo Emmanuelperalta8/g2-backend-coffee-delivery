@@ -14,51 +14,83 @@ datasource db {
 }
 
 model Coffee {
-  id          String     @id @default(uuid())
+  id          String       @id @default(uuid())
   name        String
   description String
-  price       Decimal    @db.Decimal(10, 2)
+  price       Decimal      @db.Decimal(10, 2)
   imageUrl    String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  
-  // Relacionamentos incompleto
-  tags        
-  cartItems  // 
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relacionamentos
+  tags        CoffeeTag[]
+  cartItems   CartItem[]
 }
 
 model Tag {
-  id        String      @id @default(uuid())
-  name      String      @unique
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  
-  // Relacionamentos 
+  id        String       @id @default(uuid())
+  name      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relacionamentos
   coffees   CoffeeTag[]
 }
 
 model CoffeeTag {
   coffeeId  String
   tagId     String
+
   // Relacionamentos aqui
+
+  coffee    Coffee @relation(fields: [coffeeId], references: [id], onDelete: Cascade)
+  tag       Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([coffeeId, tagId])
 }
+
 
 model Cart {
-  id        String     @id @default(uuid())
-  userId    String?    // Opcional para usuários não autenticados
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  
-  // Relacionamentos incompleto
-  items     CartItem[]
-}
+  id                  String     @id @default(uuid())
+  userId              String?    // Usuário opcional
+  status              String     // 'Abandonado', 'Aguardando Pagamento', 'Finalizado'
+  statusPayment       String     // 'Aprovado', 'Análise', 'Pendente', 'Cancelado'
+  dataTimeCompleted   DateTime?  // Data de finalização (pode ser null)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
+  // Relacionamentos
+  items               CartItem[]
+  orders Order[]
+}
 model CartItem {
   id         String   @id @default(uuid())
   quantity   Int
   unitPrice  Decimal  @db.Decimal(10, 2)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
-  // Relacionamentos aqui
+
+  coffeeId   String
+  cartId     String
+
+  coffee     Coffee @relation(fields: [coffeeId], references: [id], onDelete: Cascade)
+  cart       Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  //@@check(quantity >= 1 && quantity <= 5)
+
+
 }
+model Order {
+  id              String   @id @default(uuid())
+  cartId          String
+  cart            Cart     @relation(fields: [cartId], references: [id])
+  totalItems      Int
+  shippingFee     Float
+  totalAmount     Float
+  deliveryAddress Json
+  paymentMethod   String
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+

@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, HttpStatus, HttpCode } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddItemDto } from './dto/add-item.dto';
+import { UpdateItemDto } from './dto/update-item.dto';
 
 @Controller('cart')
 export class CartController {
@@ -22,4 +23,24 @@ export class CartController {
   async addItem(@Param('id') id: string, @Body() addItemDto: AddItemDto) {
     return this.cartService.addItem(id, addItemDto);
   }
+
+
+
+  @Patch(':cartId/items/:itemId')
+  async updateItem(
+    @Param('cartId') cartId: string,
+    @Param('itemId') itemId: string,
+    @Body() updateItemDto: UpdateItemDto,
+  ) {
+    return this.cartService.updateItemQuantity(cartId, itemId, updateItemDto.quantity);
+  }
+
+  @Delete(':cartId/items/:itemId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeItem(@Param('cartId') cartId: string, @Param('itemId') itemId: string) {
+    await this.cartService.removeItem(cartId, itemId);
+  }
+
+
+
 } 

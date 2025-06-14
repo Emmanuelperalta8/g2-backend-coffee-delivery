@@ -9,13 +9,16 @@ export class CartItem implements PrismaCartItem {
   unitPrice: Decimal;
   createdAt: Date;
   updatedAt: Date;
-  
-  // Campos adicionais não presentes no modelo Prisma
+
+ 
   coffee?: {
     id: string;
     name: string;
     price: number;
     imageUrl: string;
   };
-  subtotal?: number;
-} 
+
+  get subtotal(): number {
+    return this.unitPrice.toNumber() * this.quantity;
+  }
+}

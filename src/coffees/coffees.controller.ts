@@ -1,6 +1,9 @@
-import { Controller, Get, Post, Body, Param, HttpStatus, HttpCode, Query } from '@nestjs/common';
+import { 
+  Controller, Get, Post, Body, Param, HttpStatus, HttpCode, Query, Delete, Patch, ParseIntPipe, NotFoundException 
+} from '@nestjs/common';
 import { CoffeesService } from './coffees.service';
 import { CreateCoffeeDto } from './dto/create-coffee.dto';
+import { UpdateCoffeeDto } from './dto/update-coffee.dto';
 
 @Controller('coffees')
 export class CoffeesController {
@@ -17,8 +20,8 @@ export class CoffeesController {
     @Query('end_date') end_date?: string,
     @Query('name') name?: string,
     @Query('tags') tags?: string,
-    @Query('limit') limit = 10,
-    @Query('offset') offset = 0,
+    @Query('limit', ParseIntPipe) limit = 10,
+    @Query('offset', ParseIntPipe) offset = 0,
   ) {
     const tagsList = tags ? tags.split(',') : [];
     
@@ -27,8 +30,8 @@ export class CoffeesController {
       end_date: end_date ? new Date(end_date) : undefined,
       name,
       tags: tagsList,
-      limit: +limit,
-      offset: +offset,
+      limit,
+      offset,
     });
   }
 
@@ -43,5 +46,24 @@ export class CoffeesController {
     return this.coffeesService.create(createCoffeeDto);
   }
 
-  // adicionar outro endpoints
-} 
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id') id: string): Promise<void> {
+    const deleted = await this.coffeesService.remove(id);
+    if (!deleted) {
+      throw new NotFoundException(`Café com id ${id} não encontrado`);
+    }
+  }
+
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateCoffeeDto: UpdateCoffeeDto,
+  ) {
+    const coffee = await this.coffeesService.update(id, updateCoffeeDto);
+    if (!coffee) {
+      throw new NotFoundException(`Café com id ${id} não encontrado`);
+    }
+    return coffee;
+  }
+}
